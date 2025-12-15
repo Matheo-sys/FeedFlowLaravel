@@ -34,6 +34,8 @@ services:
       MYSQL_DATABASE: feedflow_dev
       MYSQL_USER: feedflow_user
       MYSQL_PASSWORD: feedflow2025
+    ports:
+      - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     networks:

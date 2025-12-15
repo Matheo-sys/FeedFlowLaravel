@@ -47,4 +47,21 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function getNameAttribute(): string
+    {
+        return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function organizations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Organization::class, 'organization_user')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
+    public function ownedOrganizations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Organization::class, 'user_id');
+    }
 }

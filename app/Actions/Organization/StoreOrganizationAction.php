@@ -2,6 +2,7 @@
 namespace App\Actions\Organization;
 
 use App\DTOs\OrganizationDTO;
+use App\Models\Organization;
 use Illuminate\Support\Facades\DB;
 
 final class StoreOrganizationAction
@@ -11,11 +12,19 @@ final class StoreOrganizationAction
     /**
      * Store an organization
      * @param OrganizationDTO $dto
-     * @return array
+     * @return Organization
      */
-    public function handle(OrganizationDTO $dto): array
+    public function execute(OrganizationDTO $dto): Organization
     {
         return DB::transaction(function () use ($dto) {
+            $organization = Organization::create([
+                'name' => $dto->name,
+                'user_id' => $dto->owner_id,
+            ]);
+
+            $organization->users()->attach($dto->owner_id, ['role' => 'admin']);
+
+            return $organization;
         });
     }
 }

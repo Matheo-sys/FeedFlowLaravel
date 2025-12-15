@@ -15,6 +15,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::resource('organizations', \App\Http\Controllers\OrganizationController::class);
+    Route::post('/organizations/{organization}/invite', [\App\Http\Controllers\OrganizationController::class, 'invite'])->name('organizations.invite');
+    Route::post('/organizations/{organization}/switch', [\App\Http\Controllers\OrganizationController::class, 'switchOrganization'])->name('organizations.switch');
 });
 
 require __DIR__.'/auth.php';

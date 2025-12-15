@@ -6,12 +6,16 @@ use Illuminate\Http\Request;
 
 final class OrganizationDTO
 {
-    private function __construct(
+    public function __construct(
+        public readonly string $name,
+        public readonly int $owner_id,
     ) {}
 
     public static function fromRequest(Request $request): self
     {
         return new self(
+            name: $request->validated('name'),
+            owner_id: $request->user()->id,
         );
     }
 }
