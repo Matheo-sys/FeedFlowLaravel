@@ -5,6 +5,7 @@ use App\DTOs\OrganizationDTO;
 use App\DTOs\OrganizationMemberDTO;
 use App\Models\Organization;
 use Illuminate\Support\Facades\DB;
+use App\Models\OrganizationUser;
 
 final class StoreOrganizationMemberAction
 {
@@ -31,7 +32,11 @@ final class StoreOrganizationMemberAction
                 throw new \Exception('User is already a member.');
             }
 
-            $organization->users()->attach($user->id, ['role' => $dto->role]);
+            OrganizationUser::create([
+                'organization_id' => $organization->id,
+                'user_id' => $user->id,
+                'role' => $dto->role,
+            ]);
 
             return ['success' => true];
         });

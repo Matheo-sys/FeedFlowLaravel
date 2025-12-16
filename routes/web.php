@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SurveyController;
+use App\Http\Controllers\OrganizationController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -16,14 +19,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('organizations', \App\Http\Controllers\OrganizationController::class);
-    Route::post('/organizations/{organization}/invite', [\App\Http\Controllers\OrganizationController::class, 'invite'])->name('organizations.invite');
-    Route::post('/organizations/{organization}/switch', [\App\Http\Controllers\OrganizationController::class, 'switchOrganization'])->name('organizations.switch');
+    Route::resource('organizations', OrganizationController::class);
+    Route::post('/organizations/{organization}/invite', [OrganizationController::class, 'invite'])->name('organizations.invite');
+    Route::post('/organizations/{organization}/switch', [OrganizationController::class, 'switchOrganization'])->name('organizations.switch');
+    Route::delete('/organizations/{organization}', [OrganizationController::class, 'destroy'])->name('organizations.destroy');
 
-    Route::get('/surveys', [\App\Http\Controllers\SurveyController::class, 'index'])->name('surveys.index');
-    Route::post('/survey/create', [\App\Http\Controllers\SurveyController::class, 'create'] )->name('organizations.create');
-    Route::post('/survey/modify');
-    Route::post('/survey/delete', );
+
+    Route::resource('surveys', SurveyController::class); 
+    //Route::resource('surveys.create', \App\Http\Controllers\SurveyController::class);
+    Route::post('/survey/create', [SurveyController::class, 'store']) ->name('surveys.create');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
