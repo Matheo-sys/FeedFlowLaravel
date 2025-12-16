@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Survey;
+use App\Models\OrganizationUser;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -37,6 +38,10 @@ class SurveyPolicy
      */
     public function update(User $user, Survey $survey): bool
     {
+        $query = OrganizationUser::where('user_id',$user->id)->where('organization_id',$survey->organization_id);
+        if ($user->id == $survey->user_id || $query->role == "admin") {
+            return true;
+        }
         return false;
     }
 
@@ -45,8 +50,11 @@ class SurveyPolicy
      */
     public function delete(User $user, Survey $survey): bool
     {
-        return false;
-    }
+        $query = OrganizationUser::where('user_id',$user->id)->where('organization_id',$survey->organization_id);
+        if ($user->id == $survey->user_id || $query->role == "admin") {
+            return true;
+        }
+        return false;    }
 
     /**
      * Determine whether the user can restore the model.
