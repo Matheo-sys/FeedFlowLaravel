@@ -39,24 +39,30 @@
                             </thead>
                             <tbody>
                                 @foreach($organizations as $organization)
-                                    <tr>
-                                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                    <tr class="bg-white">
+                                        <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                             <p class="text-gray-900 whitespace-no-wrap">{{ $organization->name }}</p>
                                         </td>
-                                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                             <span class="relative inline-block px-3 py-1 font-semibold text-green-900 leading-tight">
                                                 <span aria-hidden class="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
-                                                <span class="relative">{{ $organization->pivot->role }}</span>
+                                                <span class="relative capitalize">{{ $organization->pivot->role }}</span>
                                             </span>
                                         </td>
-                                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                             <div class="flex items-center gap-2">
-                                                <form action="{{ route('organizations.switch', $organization) }}" method="POST">
-                                                    @csrf
-                                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                                        Switch
-                                                    </button>
-                                                </form>
+                                                @if(auth()->user()->isCurrentOrganization($organization))
+                                                    <span class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest cursor-default">
+                                                        Active
+                                                    </span>
+                                                @else
+                                                    <form action="{{ route('organizations.switch', $organization) }}" method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                                            Switch
+                                                        </button>
+                                                    </form>
+                                                @endif
 
                                                 @can('update', $organization)
                                                     <a href="{{ route('organizations.edit', $organization) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">

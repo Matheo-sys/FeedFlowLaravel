@@ -65,4 +65,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Organization::class, 'user_id');
     }
+
+    public function isCurrentOrganization(Organization $organization): bool
+    {
+        return $this->organization_id === $organization->id;
+    }
 }

@@ -82,6 +82,7 @@ class OrganizationController extends Controller
         $this->authorize('view', $organization);
         
         session(['organization_id' => $organization->id]);
+        auth()->user()->update(['organization_id' => $organization->id]);
         
         return redirect()->route('dashboard')->with('success', "Switched to {$organization->name}.");
     }
