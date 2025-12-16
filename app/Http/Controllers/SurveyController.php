@@ -23,6 +23,7 @@ class SurveyController extends Controller
     public function store(StoreSurveyRequest $request, StoreSurveyAction $action)
     {
         $dto = SurveyDTO::formRequest($request);
+        $action->execute($dto);
         return redirect()->route('surveys.index')->with('success', 'Survey created successfully');
     }
 
