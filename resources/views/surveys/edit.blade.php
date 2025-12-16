@@ -67,13 +67,13 @@
                             </label>
                         </div>
 
-                        <div class="flex items-center justify-end mt-4">
+                        <div class="flex items-center gap-3 justify-end mt-4">
                             <a href="{{ route('surveys.show', $survey) }}"
-                                class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-4">
-                                {{ __('Cancel') }}
+                                class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                Cancel
                             </a>
                             <x-primary-button class="ml-4">
-                                {{ __('Update Survey') }}
+                                Update Survey
                             </x-primary-button>
                         </div>
                     </form>
