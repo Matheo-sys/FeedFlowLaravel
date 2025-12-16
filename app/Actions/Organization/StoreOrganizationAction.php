@@ -24,6 +24,9 @@ final class StoreOrganizationAction
 
             $organization->users()->attach($dto->owner_id, ['role' => 'admin']);
 
+            // Update user's current organization context
+            \App\Models\User::where('id', $dto->owner_id)->update(['organization_id' => $organization->id]);
+
             return $organization;
         });
     }
