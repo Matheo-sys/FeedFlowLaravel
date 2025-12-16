@@ -19,6 +19,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('organizations', \App\Http\Controllers\OrganizationController::class);
     Route::post('/organizations/{organization}/invite', [\App\Http\Controllers\OrganizationController::class, 'invite'])->name('organizations.invite');
     Route::post('/organizations/{organization}/switch', [\App\Http\Controllers\OrganizationController::class, 'switchOrganization'])->name('organizations.switch');
+
+    Route::get('/surveys', [\App\Http\Controllers\SurveyController::class, 'index'])->name('surveys.index');
+    Route::post('/survey/create', [\App\Http\Controllers\SurveyController::class, 'create'] )->name('organizations.create');
+    Route::post('/survey/modify');
+    Route::post('/survey/delete', );
 });
 
 require __DIR__.'/auth.php';
