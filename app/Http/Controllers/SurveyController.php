@@ -14,15 +14,17 @@ use App\DTOs\SurveyQuestionDTO;
 
 class SurveyController extends Controller
 {
-    public function index() : View {
+    public function index(): View
+    {
         $this->authorize('viewAny', Survey::class);
         $surveys = Survey::all();
         return view('surveys.index', compact('surveys'));
     }
 
-    public function create(): View {
+    public function create(): View
+    {
         $this->authorize('create', Survey::class);
-        return view('surveys.create');  
+        return view('surveys.create');
     }
 
     public function store(Request $request, StoreSurveyAction $action, StoreSurveyQuestionAction $questionAction)
@@ -76,32 +78,36 @@ class SurveyController extends Controller
         return redirect()->route('surveys.index')->with('success', 'Survey created successfully');
     }
 
-    public function show(Survey $survey): View {
-        $this->authorize('view',  Survey::class, $survey);
+    public function show(Survey $survey): View
+    {
+        $this->authorize('view', $survey);
+        $survey->load('questions');
         return view('surveys.show', compact('survey'));
     }
 
-    public function edit(Survey $survey): View {
-        $this->authorize('update', Survey::class, $survey);
+    public function edit(Survey $survey): View
+    {
+        $this->authorize('update', $survey);
         return view('surveys.edit', compact('survey'));
     }
 
     public function update(Request $request, Survey $survey)
     {
-        $this->authorize('update', Survey::class, $survey);
+        $this->authorize('update', $survey);
         $survey->update($request->all());
         return redirect()->route('surveys.index')->with('success', 'Survey updated successfully');
     }
 
     public function destroy(Survey $survey)
     {
-        $this->authorize('delete',  Survey::class, $survey);
+        $this->authorize('delete', $survey);
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
     }
 
     public function storeQuestion(StoreSurveyQuestionRequest $request, int $surveyId, StoreSurveyQuestionAction $action)
     {
+        $survey = Survey::findOrFail($surveyId);
         $this->authorize('create', Survey::class);
         $dto = SurveyQuestionDTO::fromRequest($request);
         $question = $action->handle($dto, $surveyId);

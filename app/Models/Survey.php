@@ -9,13 +9,28 @@ class Survey extends Model
 {
     use HasFactory;
 
-    protected $table    = 'surveys';
-    public $timestamps  = true;
+    protected $table = 'surveys';
+    public $timestamps = true;
     protected $fillable = [
-        'id', 'organization_id', 'user_id',
-        'title', 'description', 'start_date', 'end_date', 'is_anonymous',
-        'created_at', 'updated_at'
+        'id',
+        'organization_id',
+        'user_id',
+        'title',
+        'description',
+        'start_date',
+        'end_date',
+        'is_anonymous',
+        'created_at',
+        'updated_at'
     ];
     protected $casts = [
     ];
+
+    /**
+     * Get all questions for this survey
+     */
+    public function questions()
+    {
+        return $this->hasMany(SurveyQuestion::class, 'survey_id');
+    }
 }
