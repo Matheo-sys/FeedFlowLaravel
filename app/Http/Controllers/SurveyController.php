@@ -10,6 +10,7 @@ use App\DTOs\SurveyDTO;
 use Illuminate\Http\Request;
 use App\Actions\Survey\StoreSurveyQuestionAction;
 use App\Http\Requests\Survey\StoreSurveyQuestionRequest;
+use App\Http\Requests\Survey\UpdateSurveyRequest;
 use App\DTOs\SurveyQuestionDTO;
 
 class SurveyController extends Controller
@@ -79,7 +80,7 @@ public function index(): View
         return view('surveys.edit', compact('survey'));
     }
 
-    public function update(Request $request, Survey $survey)
+    public function update(UpdateSurveyRequest $request, Survey $survey)
     {
         $this->authorize('update', $survey);
         $survey->update($request->all());
