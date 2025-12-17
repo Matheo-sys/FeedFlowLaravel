@@ -24,11 +24,13 @@ class Survey extends Model
         'created_at',
         'updated_at',
         'status',
+        'receive_new_answer_notifications',
     ];
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'is_anonymous' => 'boolean',
+        'receive_new_answer_notifications' => 'boolean',
     ];
 
     protected $attributes = [

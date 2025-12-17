@@ -4,6 +4,7 @@ namespace App\Actions\Organization;
 use App\DTOs\OrganizationDTO;
 use App\Models\Organization;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 final class StoreOrganizationAction
 {
@@ -24,8 +25,7 @@ final class StoreOrganizationAction
 
             $organization->users()->attach($dto->owner_id, ['role' => 'admin']);
 
-            // Update user's current organization context
-            \App\Models\User::where('id', $dto->owner_id)->update(['organization_id' => $organization->id]);
+            User::where('id', $dto->owner_id)->update(['organization_id' => $organization->id]);
 
             return $organization;
         });

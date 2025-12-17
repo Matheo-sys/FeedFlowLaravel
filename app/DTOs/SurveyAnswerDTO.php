@@ -4,14 +4,21 @@ namespace App\DTOs;
 
 use Illuminate\Http\Request;
 
-final class SurveyAnswerDTO
+class SurveyAnswerDTO
 {
-    private function __construct(
-    ) {}
+    public function __construct(
+        public readonly int $survey_id,
+        public readonly int|null $user_id,
+        public readonly array $answers
+    ) {
+    }
 
-    public static function fromRequest(Request $request): self
+    public static function fromRequest(Request $request, int $survey_id)
     {
         return new self(
+            survey_id: $survey_id,
+            user_id: $request->user()?->id,
+            answers: $request->input('answers', [])
         );
     }
 }
