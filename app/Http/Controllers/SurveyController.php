@@ -77,31 +77,32 @@ class SurveyController extends Controller
     }
 
     public function show(Survey $survey): View {
-        $this->authorize('view',  Survey::class, $survey);
+        $this->authorize('view', $survey);
         return view('surveys.show', compact('survey'));
     }
 
     public function edit(Survey $survey): View {
-        $this->authorize('update', Survey::class, $survey);
+        $this->authorize('update', $survey);
         return view('surveys.edit', compact('survey'));
     }
 
     public function update(Request $request, Survey $survey)
     {
-        $this->authorize('update', Survey::class, $survey);
+        $this->authorize('update', $survey);
         $survey->update($request->all());
         return redirect()->route('surveys.index')->with('success', 'Survey updated successfully');
     }
 
     public function destroy(Survey $survey)
     {
-        $this->authorize('delete',  Survey::class, $survey);
+        $this->authorize('delete', $survey);
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
     }
 
     public function storeQuestion(StoreSurveyQuestionRequest $request, int $surveyId, StoreSurveyQuestionAction $action)
     {
+        $survey = Survey::findOrFail($surveyId);
         $this->authorize('create', Survey::class);
         $dto = SurveyQuestionDTO::fromRequest($request);
         $question = $action->handle($dto, $surveyId);
