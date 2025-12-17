@@ -30,7 +30,7 @@ class SurveyPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -38,7 +38,8 @@ class SurveyPolicy
      */
     public function update(User $user, Survey $survey): bool
     {
-        $query = OrganizationUser::where('user_id',$user->id)->where('organization_id',$survey->organization_id)->first();;
+        $query = OrganizationUser::where('user_id', $user->id)->where('organization_id', $survey->organization_id)->first();
+        ;
         if ($user->id == $survey->user_id || $query->role == "admin") {
             return true;
         }
@@ -50,11 +51,12 @@ class SurveyPolicy
      */
     public function delete(User $user, Survey $survey): bool
     {
-        $query = OrganizationUser::where('user_id',$user->id)->where('organization_id',$survey->organization_id)->first();
+        $query = OrganizationUser::where('user_id', $user->id)->where('organization_id', $survey->organization_id)->first();
         if ($user->id == $survey->user_id || $query->role == "admin") {
             return true;
         }
-        return false;    }
+        return false;
+    }
 
     /**
      * Determine whether the user can restore the model.

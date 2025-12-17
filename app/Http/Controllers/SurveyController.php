@@ -8,30 +8,79 @@ use App\Models\Survey;
 use Illuminate\View\View;
 use App\DTOs\SurveyDTO;
 use Illuminate\Http\Request;
+use App\Actions\Survey\StoreSurveyQuestionAction;
+use App\Http\Requests\Survey\StoreSurveyQuestionRequest;
+use App\DTOs\SurveyQuestionDTO;
 
 class SurveyController extends Controller
 {
-    public function index() : View {
+    public function index(): View
+    {
         $surveys = Survey::all();
         return view('surveys.index', compact('surveys'));
     }
 
-    public function create(): View {
-        return view('surveys.create');  
+    public function create(): View
+    {
+        return view('surveys.create');
     }
 
-    public function store(StoreSurveyRequest $request, StoreSurveyAction $action)
+    public function store(Request $request, StoreSurveyAction $action, StoreSurveyQuestionAction $questionAction)
     {
+        // Handle JSON request from Alpine.js
+        if ($request->wantsJson() || $request->isJson()) {
+            $surveyData = $request->only(['title', 'description', 'start_date', 'end_date', 'is_anonymous']);
+            $questions = $request->input('questions', []);
+
+            \Log::info('Survey creation started', [
+                'survey_data' => $surveyData,
+                'questions_count' => count($questions),
+                'questions' => $questions
+            ]);
+
+            // Create survey
+            $dto = SurveyDTO::formArray($surveyData);
+            $survey = $action->execute($dto);
+
+            \Log::info('Survey created', ['survey_id' => $survey->id]);
+
+            // Create questions for the survey
+            $createdQuestions = [];
+            foreach ($questions as $index => $questionData) {
+                \Log::info("Processing question {$index}", ['data' => $questionData]);
+
+                if (!empty($questionData['title'])) {
+                    $questionDTO = SurveyQuestionDTO::fromArray($questionData);
+                    $question = $questionAction->handle($questionDTO, $survey->id);
+                    $createdQuestions[] = $question;
+
+                    \Log::info("Question {$index} created", ['question_id' => $question->id]);
+                }
+            }
+
+            \Log::info('All questions processed', ['total_created' => count($createdQuestions)]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Survey created successfully',
+                'survey' => $survey,
+                'questions_created' => count($createdQuestions)
+            ], 201);
+        }
+
+        // Handle traditional form request
         $dto = SurveyDTO::formRequest($request);
         $action->execute($dto);
         return redirect()->route('surveys.index')->with('success', 'Survey created successfully');
     }
 
-    public function show(Survey $survey): View {
+    public function show(Survey $survey): View
+    {
         return view('surveys.show', compact('survey'));
     }
 
-    public function edit(Survey $survey): View {
+    public function edit(Survey $survey): View
+    {
         return view('surveys.edit', compact('survey'));
     }
 
@@ -45,5 +94,13 @@ class SurveyController extends Controller
     {
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
+    }
+
+    public function storeQuestion(StoreSurveyQuestionRequest $request, int $surveyId, StoreSurveyQuestionAction $action)
+    {
+        $dto = SurveyQuestionDTO::fromRequest($request);
+        $question = $action->handle($dto, $surveyId);
+
+        return response()->json(['message' => 'Question created', 'question' => $question], 201);
     }
 }
