@@ -46,4 +46,33 @@ class SurveyController extends Controller
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
     }
+    //public function showByToken(string $token): View
+    //{
+        //$survey = Survey::where('token', $token)->firstOrFail();
+        //return view('surveys.public_show', compact('survey'));
+    //}
+
+        public function publicShow(string $token)
+    {
+        // Public survey entrypoint by token.
+        $survey = Survey::where('public_token', $token)->firstOrFail();
+
+        // Validate active period.
+        $now = Carbon::now();
+        if ($now->lt(Carbon::parse($survey->start_date)) || $now->gt(Carbon::parse($survey->end_date))) {
+            abort(403);
+        }
+
+        // For non-anonymous surveys, require login.
+        if (! $survey->is_anonymous && ! auth()->check()) {
+            return redirect()
+                ->route('login')
+                ->with('status', 'Please sign in to answer this survey.');
+        }
+
+        return view('survey_public', [
+            'survey' => $survey,
+            //'questions' => $survey->questions()->orderBy('id')->get(),
+        ]);
+    }
 }

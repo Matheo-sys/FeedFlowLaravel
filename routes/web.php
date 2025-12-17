@@ -10,6 +10,18 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Route publique accessible sans authentification (Critère d'acceptation)
+Route::get('/survey/{token}', [SurveyController::class, 'showByToken'])->name('surveys.public_show');
+
+// Route temporaire pour générer les tokens manquants (A SUPPRIMER APRES USAGE)
+Route::get('/fix-tokens', function () {
+    $surveys = \App\Models\Survey::whereNull('token')->orWhere('token', '')->get();
+    foreach ($surveys as $survey) {
+        $survey->update(['token' => \Illuminate\Support\Str::random(64)]);
+    }
+    return count($surveys) . ' sondages ont été mis à jour avec un token.';
+});
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -26,8 +38,6 @@ Route::middleware('auth')->group(function () {
 
 
     Route::resource('surveys', SurveyController::class); 
-    //Route::resource('surveys.create', \App\Http\Controllers\SurveyController::class);
-    Route::post('/survey/create', [SurveyController::class, 'store']) ->name('surveys.create');
 });
 
 require __DIR__ . '/auth.php';
