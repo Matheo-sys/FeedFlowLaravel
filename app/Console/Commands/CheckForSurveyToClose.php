@@ -39,13 +39,13 @@ class CheckForSurveyToClose extends Command
         $this->info("Nombre de sondages actifs à vérifier : " . Survey::where('status', 'active')->count());
 
         foreach ($surveysToClose as $survey) {
-            $this->info("🔍 Sondage trouvé - ID: {$survey->id}, Titre: {$survey->title}, End date: {$survey->end_date}");
+            $this->info("Sondage trouvé - ID: {$survey->id}, Titre: {$survey->title}, End date: {$survey->end_date}");
 
             $survey->update(['status' => 'closed']);
 
             event(new SurveyClosed($survey));
 
-            $this->info("✅ Sondage #{$survey->id} fermé : {$survey->title}");
+            $this->info("Sondage #{$survey->id} fermé : {$survey->title}");
         }
         $this->info("Total : {$surveysToClose->count()} sondage(s) fermé(s)");
     }
