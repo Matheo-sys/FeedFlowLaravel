@@ -14,6 +14,10 @@ class SurveyPolicy
      */
     public function viewAny(User $user): bool
     {
+        $query = OrganizationUser::where('user_id',$user->id)->first();
+        if ($query) {
+            return true;
+        }
         return false;
     }
 
@@ -22,6 +26,10 @@ class SurveyPolicy
      */
     public function view(User $user, Survey $survey): bool
     {
+        $query = OrganizationUser::where('user-id',$user->id)->where('organization_id',$survey->organization_id);
+        if ($query || $survey->is_anonymous == true) {
+            return true;
+        }
         return false;
     }
 

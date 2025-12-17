@@ -14,15 +14,15 @@ use App\DTOs\SurveyQuestionDTO;
 
 class SurveyController extends Controller
 {
-    public function index(): View
-    {
+    public function index() : View {
+        $this->authorize('viewAny');
         $surveys = Survey::all();
         return view('surveys.index', compact('surveys'));
     }
 
-    public function create(): View
-    {
-        return view('surveys.create');
+    public function create(): View {
+        $this->authorize('create');
+        return view('surveys.create');  
     }
 
     public function store(Request $request, StoreSurveyAction $action, StoreSurveyQuestionAction $questionAction)
@@ -74,24 +74,26 @@ class SurveyController extends Controller
         return redirect()->route('surveys.index')->with('success', 'Survey created successfully');
     }
 
-    public function show(Survey $survey): View
-    {
+    public function show(Survey $survey): View {
+        $this->authorize('view', $survey);
         return view('surveys.show', compact('survey'));
     }
 
-    public function edit(Survey $survey): View
-    {
+    public function edit(Survey $survey): View {
+        $this->authorize('update', $survey);
         return view('surveys.edit', compact('survey'));
     }
 
     public function update(Request $request, Survey $survey)
     {
+        $this->authorize('update', $survey);
         $survey->update($request->all());
         return redirect()->route('surveys.index')->with('success', 'Survey updated successfully');
     }
 
     public function destroy(Survey $survey)
     {
+        $this->authorize('delete', $survey);
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
     }
