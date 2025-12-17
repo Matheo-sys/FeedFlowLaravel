@@ -17,6 +17,9 @@ class EventServiceProvider extends ServiceProvider
         SurveyAnswerSubmitted::class => [
             SendNewAnswerNotification::class,
         ],
+        SurveyClosed::class => [
+            SendFinalReportOnClose::class,
+        ],
     ];
 
     /**

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+
 class Survey extends Model
 {
     use HasFactory;
@@ -21,9 +22,17 @@ class Survey extends Model
         'end_date',
         'is_anonymous',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'status',
     ];
     protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'is_anonymous' => 'boolean',
+    ];
+
+    protected $attributes = [
+        'status' => 'active',
     ];
 
     /**
@@ -32,5 +41,21 @@ class Survey extends Model
     public function questions()
     {
         return $this->hasMany(SurveyQuestion::class, 'survey_id');
+    }
+
+    /**
+     * Get all responses/answers for this survey
+     */
+    public function responses()
+    {
+        return $this->hasMany(SurveyAnswer::class, 'survey_id');
+    }
+
+    /**
+     * Get the user who created this survey
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

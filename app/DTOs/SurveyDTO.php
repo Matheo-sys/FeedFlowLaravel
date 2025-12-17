@@ -14,7 +14,8 @@ class SurveyDTO
         public readonly string $description,
         public readonly string $start_date,
         public readonly string $end_date,
-        public readonly bool $is_anonymous
+        public readonly bool $is_anonymous,
+        public readonly string $status
     ) {
 
     }
@@ -29,6 +30,7 @@ class SurveyDTO
             start_date: $request->start_date,
             end_date: $request->end_date,
             is_anonymous: $request->is_anonymous ?? false,
+            status: $request->status ?? 'active',
         );
     }
 
@@ -42,6 +44,7 @@ class SurveyDTO
             start_date: $data['start_date'],
             end_date: $data['end_date'],
             is_anonymous: $data['is_anonymous'] ?? false,
+            status: $data['status'] ?? 'active',
         );
     }
 }
