@@ -103,4 +103,12 @@ public function index(): View
 
         return response()->json(['message' => 'Question created', 'question' => $question], 201);
     }
+
+    public function storeAnswer (StoreSurveyAnswerRequest $request, $survey)
+    {
+        $this->authorize('view', $survey);
+
+        $dto = SurveyAnswerDTO::fromRequest($request);
+        $answer = $action->handle($dto);
+return redirect()->route('surveys.show', $survey)->with('success', 'Votre réponse a bien été enregistrée.');    }
 }
