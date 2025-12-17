@@ -17,9 +17,9 @@ class SurveyAnswerSubmitted
     /**
      * Create a new event instance.
      */
-    public function __construct()
+    public function __construct(public Survey $survey)
     {
-        //
+        $this->survey = $survey;
     }
 
     /**
