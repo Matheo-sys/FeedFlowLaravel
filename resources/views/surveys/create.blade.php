@@ -146,9 +146,10 @@
                             </div>
 
                             <!-- Submit Button -->
-                            <div class="flex items-center justify-end mt-6">
-                                <a href="{{ route('surveys.index') }}" class="mr-4 text-gray-600 hover:text-gray-900">
-                                    Cancel
+                            <div class="flex gap-3 items-center justify-end mt-6">
+                                <a href="{{ route('surveys.index') }}" 
+                                class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest relative z-10 hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                               Cancel
                                 </a>
                                 <x-primary-button type="submit">
                                     {{ __('Create Survey') }}
@@ -161,91 +162,16 @@
         </div>
     </div>
 
-    <script>
-        function surveyForm() {
-            return {
-                survey: {
-                    title: '',
-                    description: '',
-                    start_date: '',
-                    end_date: '',
-                    is_anonymous: false
-                },
-                questions: [],
-
-                addQuestion() {
-                    this.questions.push({
-                        title: '',
-                        question_type: 'text',
-                        options: []
-                    });
-                },
-
-                removeQuestion(index) {
-                    this.questions.splice(index, 1);
-                },
-
-                updateQuestionOptions(qIndex) {
-                    const question = this.questions[qIndex];
-                    if (question.question_type === 'single_choice' || question.question_type === 'multiple_choice') {
-                        if (question.options.length === 0) {
-                            question.options = [''];
-                        }
-                    } else {
-                        question.options = [];
-                    }
-                },
-
-                addOption(qIndex) {
-                    this.questions[qIndex].options.push('');
-                },
-
-                removeOption(qIndex, oIndex) {
-                    this.questions[qIndex].options.splice(oIndex, 1);
-                },
-
-                submitSurvey() {
-                    // Clean up questions by removing empty options
-                    const cleanedQuestions = this.questions.map(q => ({
-                        title: q.title,
-                        question_type: q.question_type,
-                        options: q.options ? q.options.filter(opt => opt.trim() !== '') : []
-                    }));
-
-                    const formData = {
-                        ...this.survey,
-                        questions: cleanedQuestions,
-                        _token: document.querySelector('meta[name="csrf-token"]')?.content ||
-                            document.querySelector('input[name="_token"]')?.value
-                    };
-
-                    console.log('Submitting survey with data:', formData);
-                    console.log('Number of questions:', cleanedQuestions.length);
-
-                    fetch('{{ route("surveys.store") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': formData._token
-                        },
-                        body: JSON.stringify(formData)
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('Server response:', data);
-                            if (data.success || data.message) {
-                                window.location.href = '{{ route("surveys.index") }}';
-                            } else {
-                                alert('Error creating survey');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('An error occurred while creating the survey');
-                        });
-                }
-            };
+<script>
+    window.appConfig = {
+        urls: {
+            index: "{{ route('surveys.index') }}", 
+            store: "{{ route('surveys.store') }}" 
         }
-    </script>
+    };
+</script>
+
+<script src="{{ asset('js/surveyForm.js') }}"></script>
+
+
 </x-app-layout>

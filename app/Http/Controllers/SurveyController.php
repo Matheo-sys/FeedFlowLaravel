@@ -37,26 +37,20 @@ public function index(): View
         {
             $this->authorize('create', Survey::class);
 
-            // Handle JSON request from Alpine.js
             if ($request->wantsJson() || $request->isJson()) {
                 $surveyData = $request->only(['title', 'description', 'start_date', 'end_date', 'is_anonymous']);
                 $questions = $request->input('questions', []);
 
-
-                // Create survey
                 $dto = SurveyDTO::formArray($surveyData);
                 $survey = $action->execute($dto);
 
-                // Create questions for the survey
                 $createdQuestions = [];
                 foreach ($questions as $index => $questionData) {
-                    \Log::info("Processing question {$index}", ['data' => $questionData]);
 
                     if (!empty($questionData['title'])) {
                         $questionDTO = SurveyQuestionDTO::fromArray($questionData);
                         $question = $questionAction->handle($questionDTO, $survey->id);
                         $createdQuestions[] = $question;
-
                     }
                 }
 
@@ -68,9 +62,6 @@ public function index(): View
                 ], 201);
             }
 
-            // Handle traditional form request
-            $dto = SurveyDTO::formRequest($request);
-            $action->execute($dto);
             return redirect()->route('surveys.index')->with('success', 'Survey created successfully');
         }
 

@@ -38,7 +38,11 @@ class SurveyPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        $query = OrganizationUser::where('user_id', $user->id)->first();
+        if ($query) {
+            return true;
+        }
+        return false;
     }
 
     /**
