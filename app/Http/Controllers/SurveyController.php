@@ -15,18 +15,20 @@ use App\DTOs\SurveyQuestionDTO;
 class SurveyController extends Controller
 {
     public function index() : View {
-        $this->authorize('viewAny');
+        $this->authorize('viewAny', Survey::class);
         $surveys = Survey::all();
         return view('surveys.index', compact('surveys'));
     }
 
     public function create(): View {
-        $this->authorize('create');
+        $this->authorize('create', Survey::class);
         return view('surveys.create');  
     }
 
     public function store(Request $request, StoreSurveyAction $action, StoreSurveyQuestionAction $questionAction)
     {
+        $this->authorize('create', Survey::class);
+
         // Handle JSON request from Alpine.js
         if ($request->wantsJson() || $request->isJson()) {
             $surveyData = $request->only(['title', 'description', 'start_date', 'end_date', 'is_anonymous']);
@@ -75,31 +77,32 @@ class SurveyController extends Controller
     }
 
     public function show(Survey $survey): View {
-        $this->authorize('view', $survey);
+        $this->authorize('view', $survey, Survey::class);
         return view('surveys.show', compact('survey'));
     }
 
     public function edit(Survey $survey): View {
-        $this->authorize('update', $survey);
+        $this->authorize('update', $survey, Survey::class);
         return view('surveys.edit', compact('survey'));
     }
 
     public function update(Request $request, Survey $survey)
     {
-        $this->authorize('update', $survey);
+        $this->authorize('update', $survey, Survey::class);
         $survey->update($request->all());
         return redirect()->route('surveys.index')->with('success', 'Survey updated successfully');
     }
 
     public function destroy(Survey $survey)
     {
-        $this->authorize('delete', $survey);
+        $this->authorize('delete', $survey, Survey:class);
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
     }
 
     public function storeQuestion(StoreSurveyQuestionRequest $request, int $surveyId, StoreSurveyQuestionAction $action)
     {
+        $this->authorize('create', Survey::class);
         $dto = SurveyQuestionDTO::fromRequest($request);
         $question = $action->handle($dto, $surveyId);
 

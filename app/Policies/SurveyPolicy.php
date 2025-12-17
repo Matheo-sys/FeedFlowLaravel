@@ -14,7 +14,7 @@ class SurveyPolicy
      */
     public function viewAny(User $user): bool
     {
-        $query = OrganizationUser::where('user_id',$user->id)->first();
+        $query = OrganizationUser::where('user_id',$user->id);
         if ($query) {
             return true;
         }
