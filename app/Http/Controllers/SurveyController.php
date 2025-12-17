@@ -77,25 +77,25 @@ class SurveyController extends Controller
     }
 
     public function show(Survey $survey): View {
-        $this->authorize('view', $survey, Survey::class);
+        $this->authorize('view',  Survey::class, $survey);
         return view('surveys.show', compact('survey'));
     }
 
     public function edit(Survey $survey): View {
-        $this->authorize('update', $survey, Survey::class);
+        $this->authorize('update', Survey::class, $survey);
         return view('surveys.edit', compact('survey'));
     }
 
     public function update(Request $request, Survey $survey)
     {
-        $this->authorize('update', $survey, Survey::class);
+        $this->authorize('update', Survey::class, $survey);
         $survey->update($request->all());
         return redirect()->route('surveys.index')->with('success', 'Survey updated successfully');
     }
 
     public function destroy(Survey $survey)
     {
-        $this->authorize('delete', $survey, Survey:class);
+        $this->authorize('delete',  Survey::class, $survey);
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
     }
