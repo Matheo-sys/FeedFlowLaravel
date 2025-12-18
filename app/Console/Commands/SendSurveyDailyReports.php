@@ -29,8 +29,8 @@ class SendSurveyDailyReports extends Command
      */
     public function handle()
     {
-        //$yesterday = Carbon::today();
-        $yesterday = Carbon::yesterday();
+        $yesterday = Carbon::today();
+        //$yesterday = Carbon::yesterday();
         $start = $yesterday->copy()->startOfDay();
         $end = $yesterday->copy()->endOfDay();
 
@@ -40,7 +40,7 @@ class SendSurveyDailyReports extends Command
             ->selectRaw('count(distinct user_id) as response_count')
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('survey_id')
-            ->having('response_count', '>=', 10)
+            ->having('response_count', '>=', 1)//10
             ->get();
 
         $this->info("Nombre de sondages éligibles (>10 réponses) : " . $stats->count());

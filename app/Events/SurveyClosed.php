@@ -15,6 +15,8 @@ class SurveyClosed
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public $survey;
+
     /**
      * Create a new event instance.
      */
