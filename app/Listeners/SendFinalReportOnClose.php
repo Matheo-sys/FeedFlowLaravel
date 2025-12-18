@@ -25,27 +25,22 @@ class SendFinalReportOnClose
     {
         $survey = $event->survey;
 
-        // Préparer les données du rapport
         $reportData = [
             'survey' => $survey,
             'total_responses' => $survey->responses()->count(),
             'statistics' => $this->calculateStatistics($survey),
         ];
 
-        // Envoyer l'email au créateur du sondage
         Mail::to($survey->user->email)
             ->send(new SurveyFinalReport($reportData));
     }
 
     private function calculateStatistics($survey)
     {
-        // Calculer les statistiques par question
-        // À adapter selon votre structure de données
         return $survey->questions()->with('responses')->get()->map(function ($question) {
             return [
                 'question' => $question->text,
                 'response_count' => $question->responses->count(),
-                // Autres statistiques selon le type de question
             ];
         });
     }
