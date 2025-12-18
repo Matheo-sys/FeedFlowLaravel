@@ -16,6 +16,10 @@ use App\Actions\Survey\StoreSurveyAnswerAction;
 use App\DTOs\SurveyAnswerDTO;
 use App\DTOs\SurveyQuestionDTO;
 use App\Models\SurveyAnswer;
+use App\Listeners\SendNewAnswerNotification;
+use App\Action\Survey\StoreSurveyAnwerAction;
+use App\Events\SurveyAnswerSubmitted;
+
 
 class SurveyController extends Controller
 {
@@ -120,5 +124,8 @@ public function index(): View
 
         $dto = SurveyAnswerDTO::fromRequest($request);
         $answer = $action->handle($dto,$survey);
+
+        SurveyAnswerSubmitted::dispatch($survey);
+
         return redirect()->route('surveys.show', $survey)->with('success', 'Votre réponse a bien été enregistrée.');    }
 }
