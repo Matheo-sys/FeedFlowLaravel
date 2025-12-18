@@ -3,6 +3,9 @@ namespace App\Actions\Survey;
 
 use App\DTOs\SurveyDTO;
 use Illuminate\Support\Facades\DB;
+use App\DTOs\SurveyAnswerDTO;
+use App\Models\Survey;
+use App\Models\SurveyAnswer;
 
 final class StoreSurveyAnswerAction
 {
@@ -13,18 +16,22 @@ final class StoreSurveyAnswerAction
      * @param SurveyDTO $dto
      * @return array
      */
-    public function handle(SurveyDTO $dto): array
+public function handle(SurveyAnswerDTO $dto, Survey $survey): void
     {
-        return DB::transaction(function () use ($dto) {
-            return SurveyAnswer::create([
-                'survey_id' => $dto->survey_id,
-                'user_id' => $dto->user_id,
-                'answer' => $dto->answer,
-                'question_id' => $dto->question_id
-                'created_at' => $dto->created_at,
-                'updated_at' => $dto->updated_at,
-            ]);
+
+        DB::transaction(function () use ($dto, $survey) {
+            foreach ($dto->answers as $questionId => $value) {
                 
+                // Si c'est un tableau (checkbox), on le transforme en JSON
+                $finalValue = is_array($value) ? json_encode($value) : $value;
+
+                SurveyAnswer::create([
+                    'survey_id' => $survey->id,
+                    'survey_question_id' => $questionId,
+                    'user_id' => auth()->id(),
+                    'answer' => $finalValue, // La virgule importante est ici
+                ]);
+            }
         });
     }
 }

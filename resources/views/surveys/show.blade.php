@@ -10,19 +10,28 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
 
-                    {{-- 1. MESSAGE FLASH (Succès) --}}
+                    {{-- Gestion des messages Flash (Succès/Erreur) --}}
                     @if(session('success'))
-                        <div class="mb-8 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative" role="alert">
-                            <strong class="font-bold">Succès !</strong>
-                            <span class="block sm:inline">{{ session('success') }}</span>
+                        <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative">
+                            {{ session('success') }}
                         </div>
                     @endif
 
-                    {{-- MESSAGE FLASH (Erreur globale optionnelle) --}}
                     @if ($errors->any())
-                        <div class="mb-8 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-                            <strong class="font-bold">Oups !</strong>
-                            <span class="block sm:inline">Veuillez corriger les erreurs ci-dessous.</span>
+                        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+                            <strong>Oups !</strong> Il y a des erreurs dans votre soumission.
+                        </div>
+                    @endif
+
+                    {{-- LOGIQUE PHP : Vérifier si l'utilisateur a déjà répondu --}}
+                    @php
+                        // $userAnswers est passé par le contrôleur (keyBy('survey_question_id'))
+                        $hasAnswered = isset($userAnswers) && $userAnswers->count() > 0;
+                    @endphp
+
+                    @if($hasAnswered)
+                        <div class="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded relative">
+                            Merci vous avez déjà répondu à ce sondage !
                         </div>
                     @endif
 
@@ -65,12 +74,29 @@
                                 </span>
                             </h3>
 
-                            {{-- 2. DÉBUT DU FORMULAIRE STANDARD --}}
-                            <form action="{{ route('surveys.answers.store', $survey) }}" method="POST">
+                            {{-- DÉBUT DU FORMULAIRE DE RÉPONSE --}}
+                            <form action="{{ route('surveys.storeAnswer', $survey) }}" method="POST">
                                 @csrf
                                 
                                 <div class="space-y-6">
                                     @foreach($survey->questions as $index => $question)
+
+                                        {{-- LOGIQUE PHP : Récupérer la réponse pour CETTE question --}}
+                                        @php
+                                            $existingVal = null;
+                                            $decodedVal = [];
+
+                                            if ($hasAnswered && isset($userAnswers[$question->id])) {
+                                                $existingVal = $userAnswers[$question->id]->answer;
+                                                
+                                                // Si c'est un choix multiple, on décode le JSON
+                                                if ($question->question_type === 'multiple_choice') {
+                                                    $decodedVal = json_decode($existingVal, true) ?? [];
+                                                    if (!is_array($decodedVal)) $decodedVal = [$existingVal];
+                                                }
+                                            }
+                                        @endphp
+
                                         <div class="bg-white rounded-2xl p-6 mt-3 border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-indigo-300 group">
                                             
                                             <div class="grid grid-cols-[auto_1fr] gap-6">
@@ -82,7 +108,7 @@
                                                     </span>
                                                 </div>
 
-                                                {{-- Colonne 2 : Le Contenu --}}
+                                                {{-- Colonne 2 : Le Contenu (INPUTS) --}}
                                                 <div class="min-w-0">
                                                     
                                                     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
@@ -91,12 +117,12 @@
                                                             @if($question->required) <span class="text-red-500">*</span> @endif
                                                         </h4>
                                                         
-                                                        <span class="inline-flex self-start sm:self-center shrink-0 items-center px-2.5 py-0.5 rounded-md text-m border font-medium 
-                                                            @if($question->question_type === 'text') bg-blue-50 text-blue-700 ring-blue-700/10
-                                                            @elseif($question->question_type === 'single_choice') bg-emerald-50 text-emerald-700 ring-emerald-600/20
-                                                            @elseif($question->question_type === 'multiple_choice') bg-violet-50 text-violet-700 ring-violet-700/10
-                                                            @else bg-amber-50 text-amber-700 ring-amber-600/20
-                                                            @endif">
+                                                        <span class="inline-flex self-start sm:self-center shrink-0 items-center px-2.5 py-0.5 rounded-md text-m font-medium 
+                                                            @if($question->question_type === 'text') 
+                                                            @elseif($question->question_type === 'single_choice') 
+                                                            @elseif($question->question_type === 'multiple_choice') 
+                                                            @else 
+                                                            @endif">Type de question :
                                                             @if($question->question_type === 'text') Texte libre
                                                             @elseif($question->question_type === 'single_choice') Choix unique
                                                             @elseif($question->question_type === 'multiple_choice') Choix multiple
@@ -105,35 +131,54 @@
                                                         </span>
                                                     </div>
 
-                                                    {{-- LOGIQUE DES INPUTS --}}
-                                                    
-                                                    {{-- CAS 1 : TEXTE --}}
+                                                    {{-- INPUT TYPE: TEXTE --}}
                                                     @if($question->question_type === 'text')
                                                         <div class="mt-3">
                                                             <textarea 
                                                                 name="answers[{{ $question->id }}]" 
                                                                 rows="3" 
-                                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('answers.'.$question->id) border-red-500 @enderror"
-                                                                placeholder="Votre réponse ici..."
-                                                            >{{ old('answers.'.$question->id) }}</textarea>
+                                                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('answers.'.$question->id) border-red-500 @enderror disabled:bg-gray-100 disabled:text-gray-500"
+                                                                placeholder="Votre réponse..."
+                                                                {{ $hasAnswered ? 'disabled' : '' }}
+                                                            >{{ $hasAnswered ? $existingVal : old('answers.'.$question->id) }}</textarea>
                                                         </div>
                                                     @endif
 
-                                                    {{-- CAS 2 & 3 : CHOIX (Radio & Checkbox) --}}
+                                                    {{-- INPUT TYPE: CHOIX (UNIQUE & MULTIPLE) --}}
                                                     @if(in_array($question->question_type, ['single_choice', 'multiple_choice']) && $question->options)
                                                         <div class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 @error('answers.'.$question->id) border-red-300 bg-red-50 @enderror">
                                                             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Options disponibles</p>
                                                             
                                                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                                 @foreach($question->options as $option)
-                                                                    <label class="flex items-center p-2 rounded hover:bg-white transition-colors cursor-pointer group/option">
+                                                                    @php
+                                                                        // Logique pour cocher la case
+                                                                        $checked = false;
+                                                                        if ($hasAnswered) {
+                                                                            if ($question->question_type === 'single_choice') {
+                                                                                $checked = ($existingVal == $option);
+                                                                            } else {
+                                                                                $checked = in_array($option, $decodedVal);
+                                                                            }
+                                                                        } else {
+                                                                            // Logique old() standard
+                                                                            if ($question->question_type === 'single_choice') {
+                                                                                $checked = (old('answers.'.$question->id) == $option);
+                                                                            } else {
+                                                                                $checked = (is_array(old('answers.'.$question->id)) && in_array($option, old('answers.'.$question->id)));
+                                                                            }
+                                                                        }
+                                                                    @endphp
+
+                                                                    <label class="flex items-center p-2 rounded hover:bg-white transition-colors cursor-pointer group/option {{ $hasAnswered ? 'opacity-75 cursor-default' : '' }}">
                                                                         @if($question->question_type === 'single_choice')
                                                                             <input 
                                                                                 type="radio" 
                                                                                 name="answers[{{ $question->id }}]" 
                                                                                 value="{{ $option }}" 
                                                                                 class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500 mr-3"
-                                                                                {{ old('answers.'.$question->id) == $option ? 'checked' : '' }}
+                                                                                {{ $checked ? 'checked' : '' }}
+                                                                                {{ $hasAnswered ? 'disabled' : '' }}
                                                                             >
                                                                         @else
                                                                             <input 
@@ -141,62 +186,90 @@
                                                                                 name="answers[{{ $question->id }}][]" 
                                                                                 value="{{ $option }}" 
                                                                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-3"
-                                                                                {{ (is_array(old('answers.'.$question->id)) && in_array($option, old('answers.'.$question->id))) ? 'checked' : '' }}
+                                                                                {{ $checked ? 'checked' : '' }}
+                                                                                {{ $hasAnswered ? 'disabled' : '' }}
                                                                             >
                                                                         @endif
-                                                                        <span class="text-sm text-gray-700 group-hover/option:text-gray-900">{{ $option }}</span>
+                                                                        <span class="text-sm text-gray-700 group-hover/option:text-gray-900 {{ $hasAnswered && $checked ? 'font-bold text-indigo-600' : '' }}">{{ $option }}</span>
                                                                     </label>
                                                                 @endforeach
                                                             </div>
                                                         </div>
                                                     @endif
-
-                                                    {{-- CAS 4 : ÉCHELLE 1-10 --}}
+{{-- INPUT TYPE: ECHELLE 1-10 (GRID FULL WIDTH) --}}
                                                     @if($question->question_type === 'scale_1_10')
-                                                        <div class="mt-4 overflow-x-auto pb-2">
-                                                            <div class="flex items-center gap-3 min-w-max">
+                                                        <div class="mt-4 w-full">
+                                                            {{-- UTILISATION DE GRID AU LIEU DE FLEX --}}
+                                                            {{-- grid-cols-5 : 5 par ligne sur mobile --}}
+                                                            {{-- sm:grid-cols-10 : 10 sur une seule ligne sur PC --}}
+                                                            <div class="grid grid-cols-5 sm:grid-cols-10 gap-2 w-full">
                                                                 @for($i = 1; $i <= 10; $i++)
-                                                                    <label class="cursor-pointer">
+                                                                    @php
+                                                                        $checked = $hasAnswered ? ($existingVal == $i) : (old('answers.'.$question->id) == $i);
+                                                                        
+                                                                        // Logique de couleur inchangée
+                                                                        $isRed = $i <= 5;
+                                                                        $activeClass = $isRed ? 'bg-red-600 border-red-600 text-red-500' : 'bg-green-600 border-green-600 text-green-600';
+                                                                        $hoverClass = $isRed ? 'hover:border-red-600 text-red-600' : 'hover:border-green-6000 text-green-600';
+                                                                        $baseClass = 'bg-white-600 text-gray-600 border-gray-200';
+                                                                    @endphp
+                                                                    
+                                                                    {{-- Le label prend toute la largeur de sa case de grille --}}
+                                                                    <label class="{{ $hasAnswered ? 'cursor-default' : 'cursor-pointer' }} w-full block">
                                                                         <input 
                                                                             type="radio" 
                                                                             name="answers[{{ $question->id }}]" 
                                                                             value="{{ $i }}" 
                                                                             class="sr-only peer"
-                                                                            {{ old('answers.'.$question->id) == $i ? 'checked' : '' }}
+                                                                            {{ $question->required && !$hasAnswered ? 'required' : '' }}
+                                                                            {{ $checked ? 'checked' : '' }}
+                                                                            {{ $hasAnswered ? 'disabled' : '' }}
                                                                         >
-                                                                        {{-- Le style change grâce à peer-checked --}}
-                                                                        <div class="flex items-center justify-center w-10 h-10 rounded border border-gray-200 bg-gray-50 text-xs font-bold text-gray-500 transition-all peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 hover:border-indigo-300">
+                                                                        {{-- w-full ici force le carré à remplir la grille --}}
+                                                                        <div class="w-full h-10 sm:h-12 flex items-center justify-center rounded-lg border text-sm font-bold transition-all duration-200 
+                                                                            {{ $checked ? $activeClass . ' shadow-md scale-105' : $baseClass }}
+                                                                            {{ !$hasAnswered && !$checked ? $hoverClass . ' hover:bg-gray-50' : '' }}
+                                                                            {{ $hasAnswered && !$checked ? 'opacity-50' : '' }}
+                                                                        ">
                                                                             {{ $i }}
                                                                         </div>
                                                                     </label>
                                                                 @endfor
                                                             </div>
+                                                            
+                                                            {{-- Légende alignée --}}
+                                                            <div class="flex justify-between px-1 mt-2 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                                <span class="text-red-600">Faible (1-5)</span>
+                                                                <span class="text-green-600">Élevé (6-10)</span>
+                                                            </div>
                                                         </div>
                                                     @endif
-
-                                                    {{-- MESSAGE D'ERREUR INDIVIDUEL --}}
+                                                    {{-- Message d'erreur spécifique à la question --}}
                                                     @error('answers.'.$question->id)
-                                                        <p class="mt-2 text-sm text-red-600 space-y-1">
-                                                            {{ $message }}
-                                                        </p>
+                                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                                     @enderror
-
                                                 </div>
                                             </div>
                                         </div>
                                     @endforeach
                                 </div>
 
-                                {{-- BOUTON DE SOUMISSION --}}
-                                <div class="mt-8 flex justify-end">
-                                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-base text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150 shadow-lg">
-                                        Envoyer mes réponses
-                                    </button>
-                                </div>
-                            </form> 
+                                {{-- BOUTON ENVOYER LES RÉPONSES --}}
+                                {{-- On cache le bouton si l'utilisateur a déjà répondu --}}
+                                @if(!$hasAnswered)
+                                    <div class="mt-8 flex justify-end">
+                                        <button type="submit" 
+                                                class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">                                               
+                                            Envoyer mes réponses
+                                        </button>
+                                    </div>
+                                @endif
+                                
+                            </form>
+                            {{-- FIN DU FORMULAIRE DE RÉPONSE --}}
+
                         </div>
                     @else
-                        {{-- Empty State (Inchangé) --}}
                         <div class="mt-8 pt-6 border-t border-gray-200">
                             <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm">
                                 <div class="flex">
@@ -215,6 +288,7 @@
                         </div>
                     @endif
 
+                    {{-- ZONE DES BOUTONS D'ADMINISTRATION (Edit/Delete/Back) - CONSERVÉE --}}
                     <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <a href="{{ route('surveys.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,12 +299,31 @@
 
                         <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
                             @can('update', $survey)
-                                <a href="{{ route('surveys.edit', $survey) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                <a href="{{ route('surveys.edit', $survey) }}" 
+                                            class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">                                               
+                                
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
                                     Edit
                                 </a>
                             @endcan
+
+                            @can('delete', $survey)
+                                <form action="{{ route('surveys.destroy', $survey) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce sondage ? Cette action est irréversible.');" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </form>
+                            @endcan
                         </div>
                     </div>
+                    {{-- FIN ZONE DES BOUTONS --}}
                 </div>
             </div>
         </div>

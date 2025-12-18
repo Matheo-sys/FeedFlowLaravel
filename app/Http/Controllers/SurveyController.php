@@ -11,7 +11,11 @@ use Illuminate\Http\Request;
 use App\Actions\Survey\StoreSurveyQuestionAction;
 use App\Http\Requests\Survey\StoreSurveyQuestionRequest;
 use App\Http\Requests\Survey\UpdateSurveyRequest;
+use App\Http\Requests\Survey\StoreSurveyAnswerRequest;
+use App\Actions\Survey\StoreSurveyAnswerAction;
+use App\DTOs\SurveyAnswerDTO;
 use App\DTOs\SurveyQuestionDTO;
+use App\Models\SurveyAnswer;
 
 class SurveyController extends Controller
 {
@@ -71,7 +75,13 @@ public function index(): View
     {
         $this->authorize('view', $survey);
         $survey->load('questions');
-        return view('surveys.show', compact('survey'));
+
+        $userAnswers = SurveyAnswer::where('survey_id', $survey->id)
+        ->where('user_id', auth()->id())
+        ->get()
+        ->keyBy('survey_question_id');
+
+        return view('surveys.show', compact('survey','userAnswers'));
     }
 
     public function edit(Survey $survey): View
@@ -104,11 +114,11 @@ public function index(): View
         return response()->json(['message' => 'Question created', 'question' => $question], 201);
     }
 
-    public function storeAnswer (StoreSurveyAnswerRequest $request, $survey)
+    public function storeAnswer (StoreSurveyAnswerRequest $request, Survey $survey, StoreSurveyAnswerAction $action)
     {
         $this->authorize('view', $survey);
 
         $dto = SurveyAnswerDTO::fromRequest($request);
-        $answer = $action->handle($dto);
-return redirect()->route('surveys.show', $survey)->with('success', 'Votre réponse a bien été enregistrée.');    }
+        $answer = $action->handle($dto,$survey);
+        return redirect()->route('surveys.show', $survey)->with('success', 'Votre réponse a bien été enregistrée.');    }
 }
