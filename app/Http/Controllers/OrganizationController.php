@@ -12,6 +12,8 @@ use App\Models\Organization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\DTOs\OrganizationMemberDTO;
+use App\Actions\Organization\StoreOrganizationMemberAction;
 
 class OrganizationController extends Controller
 {
@@ -59,7 +61,7 @@ class OrganizationController extends Controller
         return redirect()->route('organizations.index')->with('success', 'Organization deleted successfully.');
     }
 
-    public function invite(Request $request, Organization $organization, \App\Actions\Organization\StoreOrganizationMemberAction $action): RedirectResponse
+    public function invite(Request $request, Organization $organization, StoreOrganizationMemberAction $action): RedirectResponse
     {
         $this->authorize('update', $organization);
 
@@ -69,7 +71,7 @@ class OrganizationController extends Controller
         ]);
 
         try {
-            $dto = \App\DTOs\OrganizationMemberDTO::fromRequest($request);
+            $dto = OrganizationMemberDTO::fromRequest($request);
             $action->execute($organization, $dto);
             return back()->with('success', 'Member added successfully.');
         } catch (\Exception $e) {

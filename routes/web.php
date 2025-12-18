@@ -26,7 +26,6 @@ Route::middleware('auth')->group(function () {
 
 
     Route::resource('surveys', SurveyController::class); 
-    //Route::resource('surveys.create', \App\Http\Controllers\SurveyController::class);
     Route::post('/survey/create', [SurveyController::class, 'store']) ->name('surveys.create');
     Route::post('/survey/{survey}/answer', [SurveyController::class, 'storeAnswer'])->name('surveys.storeAnswer');});
 
