@@ -11,7 +11,7 @@ class StoreSurveyAnswerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -19,10 +19,15 @@ class StoreSurveyAnswerRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+public function rules(): array
     {
         return [
-            //
+            // 1. On autorise le champ 'answers' et on exige que ce soit un tableau
+            'answers' => ['required', 'array'],
+
+            // 2. On autorise le contenu du tableau (les réponses individuelles)
+            // Le '*' signifie "pour chaque ID de question dans le tableau"
+            'answers.*' => ['nullable'], 
         ];
     }
 }

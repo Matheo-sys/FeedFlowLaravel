@@ -6,6 +6,7 @@ use App\DTOs\OrganizationMemberDTO;
 use App\Models\Organization;
 use Illuminate\Support\Facades\DB;
 use App\Models\OrganizationUser;
+use \App\Models\User;
 
 final class StoreOrganizationMemberAction
 {
@@ -20,11 +21,9 @@ final class StoreOrganizationMemberAction
     public function execute(Organization $organization, OrganizationMemberDTO $dto): array
     {
         return DB::transaction(function () use ($organization, $dto) {
-            $user = \App\Models\User::where('email', $dto->email)->first();
+            $user = User::where('email', $dto->email)->first();
 
             if (! $user) {
-                // For now, we only support adding existing users.
-                // In a real app, we might send an invitation email here.
                 throw new \Exception('User not found.');
             }
 

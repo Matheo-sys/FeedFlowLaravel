@@ -11,41 +11,102 @@ use App\DTOs\SurveyDTO;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Actions\Survey\StoreSurveyQuestionAction;
+use App\Http\Requests\Survey\StoreSurveyQuestionRequest;
+use App\Http\Requests\Survey\UpdateSurveyRequest;
+use App\Http\Requests\Survey\StoreSurveyAnswerRequest;
+use App\Actions\Survey\StoreSurveyAnswerAction;
+use App\DTOs\SurveyAnswerDTO;
+use App\DTOs\SurveyQuestionDTO;
+use App\Models\SurveyAnswer;
+use App\Listeners\SendNewAnswerNotification;
+use App\Action\Survey\StoreSurveyAnwerAction;
+use App\Events\SurveyAnswerSubmitted;
+
 
 class SurveyController extends Controller
 {
-    public function index() : View {
-        $surveys = Survey::all();
+public function index(): View
+    {
+        $this->authorize('viewAny', Survey::class);
+        $user = auth()->user();
+        
+        $surveys = Survey::where('organization_id', $user->organization_id)
+            ->with('questions') // On charge les relations directement dans la requête
+            ->orderBy('created_at', 'desc')
+            ->get(); // IMPORTANT : On exécute la requête avec get()
+
         return view('surveys.index', compact('surveys'));
     }
 
-    public function create(): View {
-        return view('surveys.create');  
-    }
-
-    public function store(StoreSurveyRequest $request, StoreSurveyAction $action)
+    public function create(): View
     {
-        $dto = SurveyDTO::formRequest($request);
-        $action->execute($dto);
-        return redirect()->route('surveys.index')->with('success', 'Survey created successfully');
+        $this->authorize('create', Survey::class);
+        return view('surveys.create');
     }
 
-    public function show(Survey $survey): View {
-        return view('surveys.show', compact('survey'));
+    public function store(Request $request, StoreSurveyAction $action, StoreSurveyQuestionAction $questionAction)
+        {
+            $this->authorize('create', Survey::class);
+
+            if ($request->wantsJson() || $request->isJson()) {
+                $surveyData = $request->only(['title', 'description', 'start_date', 'end_date', 'is_anonymous']);
+                $questions = $request->input('questions', []);
+
+                $dto = SurveyDTO::formArray($surveyData);
+                $survey = $action->execute($dto);
+
+                $createdQuestions = [];
+                foreach ($questions as $index => $questionData) {
+
+                    if (!empty($questionData['title'])) {
+                        $questionDTO = SurveyQuestionDTO::fromArray($questionData);
+                        $question = $questionAction->handle($questionDTO, $survey->id);
+                        $createdQuestions[] = $question;
+                    }
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Survey created successfully',
+                    'survey' => $survey,
+                    'questions_created' => count($createdQuestions)
+                ], 201);
+            }
+
+            return redirect()->route('surveys.index')->with('success', 'Survey created successfully');
+        }
+
+
+    public function show(Survey $survey): View
+    {
+        $this->authorize('view', $survey);
+        $survey->load('questions');
+
+        $userAnswers = SurveyAnswer::where('survey_id', $survey->id)
+        ->where('user_id', auth()->id())
+        ->get()
+        ->keyBy('survey_question_id');
+
+        return view('surveys.show', compact('survey','userAnswers'));
     }
 
-    public function edit(Survey $survey): View {
+    public function edit(Survey $survey): View
+    {
+        $this->authorize('update', $survey);
         return view('surveys.edit', compact('survey'));
     }
 
-    public function update(Request $request, Survey $survey)
+    public function update(UpdateSurveyRequest $request, Survey $survey)
     {
+        $this->authorize('update', $survey);
         $survey->update($request->all());
         return redirect()->route('surveys.index')->with('success', 'Survey updated successfully');
     }
 
     public function destroy(Survey $survey)
     {
+        $this->authorize('delete', $survey);
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
     }
@@ -54,7 +115,6 @@ class SurveyController extends Controller
 
         $survey = Survey::where('token', $token)->firstOrFail();
 
-        // Valide la période d'activité.
         if ($survey->start_date && $survey->end_date) {
             $now = Carbon::now();
             $startDate = Carbon::parse($survey->start_date)->startOfDay();
@@ -65,7 +125,6 @@ class SurveyController extends Controller
             }
         }
 
-        // Pour les sondages non anonymes, une connexion est requise.
         if (! $survey->is_anonymous && ! auth()->check()) {
             return redirect()->route('login')
                 ->with('status', 'Veuillez vous connecter pour répondre à ce sondage.');
@@ -74,8 +133,27 @@ class SurveyController extends Controller
         // Si le sondage est trouvé, la vue correspondante est affichée avec les données du sondage.
         return view('surveys.public_show', [
             'survey' => $survey,
-            //"questions" est temporairement désactivée pour les tests.
-            'questions' => collect(),
+            // Chargement des questions associées au sondage, triées par ID.
+            'questions' => $survey->questions()->orderBy('id')->get(),
         ]);
     }
+
+    public function storeQuestion(StoreSurveyQuestionRequest $request, int $surveyId, StoreSurveyQuestionAction $action)
+    {
+        $survey = Survey::findOrFail($surveyId);
+        $this->authorize('create', Survey::class);
+        $dto = SurveyQuestionDTO::fromRequest($request);
+        $question = $action->handle($dto, $surveyId);
+
+        return response()->json(['message' => 'Question created', 'question' => $question], 201);
+    }
+
+    public function storeAnswer (StoreSurveyAnswerRequest $request, Survey $survey, StoreSurveyAnswerAction $action)
+    {
+        $this->authorize('view', $survey);
+        $dto = SurveyAnswerDTO::fromRequest($request);
+        $answer = $action->handle($dto,$survey);
+
+        SurveyAnswerSubmitted::dispatch($survey);
+        return redirect()->route('surveys.show', $survey)->with('success', 'Votre réponse a bien été enregistrée.');    }
 }

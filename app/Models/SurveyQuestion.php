@@ -9,13 +9,26 @@ class SurveyQuestion extends Model
 {
     use HasFactory;
 
-    protected $table    = 'survey_questions';
-    public $timestamps  = true;
+    protected $table = 'survey_questions';
+    public $timestamps = true;
     protected $fillable = [
-        'id', 'survey_id',
-        'title', 'question_type', 'options',
-        'created_at', 'updated_at'
+        'id',
+        'survey_id',
+        'title',
+        'question_type',
+        'options',
+        'created_at',
+        'updated_at'
     ];
     protected $casts = [
+        'options' => 'array',
     ];
+
+    /**
+     * Get all responses/answers for this question
+     */
+    public function responses()
+    {
+        return $this->hasMany(SurveyAnswer::class, 'survey_question_id');
+    }
 }

@@ -14,6 +14,10 @@ class SurveyPolicy
      */
     public function viewAny(User $user): bool
     {
+        $query = OrganizationUser::where('user_id',$user->id);
+        if ($query) {
+            return true;
+        }
         return false;
     }
 
@@ -22,6 +26,10 @@ class SurveyPolicy
      */
     public function view(User $user, Survey $survey): bool
     {
+        $query = OrganizationUser::where('user-id',$user->id)->where('organization_id',$survey->organization_id);
+        if ($query || $survey->is_anonymous == true) {
+            return true;
+        }
         return false;
     }
 
@@ -30,6 +38,10 @@ class SurveyPolicy
      */
     public function create(User $user): bool
     {
+        $query = OrganizationUser::where('user_id', $user->id)->first();
+        if ($query) {
+            return true;
+        }
         return false;
     }
 
@@ -38,7 +50,8 @@ class SurveyPolicy
      */
     public function update(User $user, Survey $survey): bool
     {
-        $query = OrganizationUser::where('user_id',$user->id)->where('organization_id',$survey->organization_id)->first();;
+        $query = OrganizationUser::where('user_id', $user->id)->where('organization_id', $survey->organization_id)->first();
+        ;
         if ($user->id == $survey->user_id || $query->role == "admin") {
             return true;
         }
@@ -50,11 +63,12 @@ class SurveyPolicy
      */
     public function delete(User $user, Survey $survey): bool
     {
-        $query = OrganizationUser::where('user_id',$user->id)->where('organization_id',$survey->organization_id)->first();
+        $query = OrganizationUser::where('user_id', $user->id)->where('organization_id', $survey->organization_id)->first();
         if ($user->id == $survey->user_id || $query->role == "admin") {
             return true;
         }
-        return false;    }
+        return false;
+    }
 
     /**
      * Determine whether the user can restore the model.

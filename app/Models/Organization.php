@@ -9,19 +9,27 @@ class Organization extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'user_id'];
+    protected $table = 'organizations';
+    public $timestamps = true;
+    protected $fillable = [
+        'id',
+        'name',
+        'user_id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function users()
     {
         return $this->belongsToMany(User::class, 'organization_user')
                     ->withPivot('role')

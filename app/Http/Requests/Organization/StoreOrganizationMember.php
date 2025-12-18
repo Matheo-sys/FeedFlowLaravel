@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Survey;
+namespace App\Http\Requests\Organization;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreSurveyRequest extends FormRequest
+class StoreOrganizationMember extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,11 +22,8 @@ class StoreSurveyRequest extends FormRequest
     public function rules(): array
     {
         return [
-                'title' => ['required', 'string', 'max:255'],       
-                'description' => ['required', 'string'],
-                'start_date' => ['required', 'date', 'after_or_equal:today'],
-                'end_date' => ['required', 'date','after:start_date'],
-                'is_anonymous' => ['boolean'],
-            ];
+            'email' => ['required', 'email', 'exists:users,email'],
+            'role' => ['sometimes', 'in:admin,member'],
+        ];
     }
 }
