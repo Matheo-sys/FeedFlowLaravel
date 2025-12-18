@@ -76,3 +76,61 @@
         </div>
     </div>
 </x-app-layout>
+
+
+<script>
+    // On définit la fonction directement ici pour être sûr qu'elle existe
+    window.copyLink = function(url, button) {
+        
+        // Fonction interne pour le feedback visuel (Texte "Copié !")
+        const triggerFeedback = () => {
+            let originalContent = button.innerHTML;
+            // On change le texte et la couleur
+            button.innerText = 'Copié !';
+            button.classList.remove('bg-gray-800'); // On enlève le gris
+            button.classList.add('bg-green-600');   // On met du vert
+            
+            // On remet tout comme avant après 2 secondes
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.classList.remove('bg-green-600');
+                button.classList.add('bg-gray-800');
+            }, 2000);
+        };
+
+        // Méthode moderne (Clipboard API)
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url)
+                .then(triggerFeedback)
+                .catch(err => {
+                    console.warn('Echec Clipboard API, tentative fallback...', err);
+                    // Si ça rate, on tente la vieille méthode
+                    fallbackCopy(url, button, triggerFeedback);
+                });
+        } else {
+            // Méthode ancienne (Fallback)
+            fallbackCopy(url, button, triggerFeedback);
+        }
+    };
+
+    // Fonction de secours pour les anciens navigateurs ou contextes non-sécurisés
+    function fallbackCopy(url, button, onSuccess) {
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        textArea.style.position = "fixed"; // Hors écran
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful && onSuccess) onSuccess();
+        } catch (err) {
+            console.error('Erreur copie :', err);
+            prompt('Copiez ce lien manuellement :', url);
+        }
+        
+        document.body.removeChild(textArea);
+    }
+</script>

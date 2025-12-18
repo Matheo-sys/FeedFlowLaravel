@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Actions\Survey\StoreSurveyAction;
 use App\Http\Requests\Survey\StoreSurveyRequest;
 use App\Models\Survey;
+use Carbon\Carbon;
 use Illuminate\View\View;
 use App\DTOs\SurveyDTO;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SurveyController extends Controller
 {
@@ -46,33 +49,33 @@ class SurveyController extends Controller
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully');
     }
-    //public function showByToken(string $token): View
-    //{
-        //$survey = Survey::where('token', $token)->firstOrFail();
-        //return view('surveys.public_show', compact('survey'));
-    //}
-
-        public function publicShow(string $token)
+    public function showByToken(Request $request, string $token): View|RedirectResponse
     {
-        // Public survey entrypoint by token.
-        $survey = Survey::where('public_token', $token)->firstOrFail();
 
-        // Validate active period.
-        $now = Carbon::now();
-        if ($now->lt(Carbon::parse($survey->start_date)) || $now->gt(Carbon::parse($survey->end_date))) {
-            abort(403);
+        $survey = Survey::where('token', $token)->firstOrFail();
+
+        // Valide la période d'activité.
+        if ($survey->start_date && $survey->end_date) {
+            $now = Carbon::now();
+            $startDate = Carbon::parse($survey->start_date)->startOfDay();
+            $endDate = Carbon::parse($survey->end_date)->endOfDay();
+
+            if (!$now->between($startDate, $endDate)) {
+                abort(403, 'Ce sondage n\'est pas ou plus actif .');
+            }
         }
 
-        // For non-anonymous surveys, require login.
+        // Pour les sondages non anonymes, une connexion est requise.
         if (! $survey->is_anonymous && ! auth()->check()) {
-            return redirect()
-                ->route('login')
-                ->with('status', 'Please sign in to answer this survey.');
+            return redirect()->route('login')
+                ->with('status', 'Veuillez vous connecter pour répondre à ce sondage.');
         }
 
-        return view('survey_public', [
+        // Si le sondage est trouvé, la vue correspondante est affichée avec les données du sondage.
+        return view('surveys.public_show', [
             'survey' => $survey,
-            //'questions' => $survey->questions()->orderBy('id')->get(),
+            //"questions" est temporairement désactivée pour les tests.
+            'questions' => collect(),
         ]);
     }
 }

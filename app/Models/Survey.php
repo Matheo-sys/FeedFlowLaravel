@@ -4,27 +4,33 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Survey extends Model
 {
     use HasFactory;
 
-    protected $table    = 'surveys';
-    public $timestamps  = true;
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'id', 'organization_id', 'user_id', 'token',
-        'title', 'description', 'start_date', 'end_date', 'is_anonymous',
-        'created_at', 'updated_at'
-    ];
-    protected $casts = [
+        'user_id',
+        'organization_id',
+        'title',
+        'description',
+        'start_date',
+        'end_date',
+        'is_anonymous',
+        'token',
     ];
 
-    protected static function booted(): void
+    /**
+     * Définit la relation "un sondage a plusieurs questions".
+     */
+    public function questions(): HasMany
     {
-        static::creating(function ($survey) {
-            // Génère un token unique de 64 caractères à la création
-            $survey->token = Str::random(64);
-        });
+        return $this->hasMany(Question::class);
     }
 }
