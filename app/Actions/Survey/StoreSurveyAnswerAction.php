@@ -6,9 +6,7 @@ use App\Events\SurveyAnswerSubmitted;
 use App\Models\Survey;
 use App\Models\SurveyAnswer;
 use Illuminate\Support\Facades\DB;
-use App\DTOs\SurveyAnswerDTO;
-use App\Models\Survey;
-use App\Models\SurveyAnswer;
+
 
 final class StoreSurveyAnswerAction
 {

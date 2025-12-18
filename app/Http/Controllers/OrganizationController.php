@@ -14,6 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\DTOs\OrganizationMemberDTO;
 use App\Actions\Organization\StoreOrganizationMemberAction;
+use App\Http\Requests\Organization\StoreOrganizationMember;
+use App\Actions\Organization\SwitchOrganizationAction;
 
 class OrganizationController extends Controller
 {
@@ -61,14 +63,9 @@ class OrganizationController extends Controller
         return redirect()->route('organizations.index')->with('success', 'Organization deleted successfully.');
     }
 
-    public function invite(Request $request, Organization $organization, StoreOrganizationMemberAction $action): RedirectResponse
+    public function invite(StoreOrganizationMember $request, Organization $organization, StoreOrganizationMemberAction $action): RedirectResponse
     {
         $this->authorize('update', $organization);
-
-        $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
-            'role' => ['sometimes', 'in:admin,member'],
-        ]);
 
         try {
             $dto = OrganizationMemberDTO::fromRequest($request);
@@ -79,12 +76,11 @@ class OrganizationController extends Controller
         }
     }
 
-    public function switchOrganization(Organization $organization): RedirectResponse
+    public function switchOrganization(Organization $organization, SwitchOrganizationAction $action): RedirectResponse
     {
         $this->authorize('view', $organization);
         
-        session(['organization_id' => $organization->id]);
-        auth()->user()->update(['organization_id' => $organization->id]);
+        $action->execute($organization);
         
         return redirect()->route('dashboard')->with('success', "Switched to {$organization->name}.");
     }
