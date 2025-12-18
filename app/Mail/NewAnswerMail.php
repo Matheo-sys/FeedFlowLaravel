@@ -23,7 +23,7 @@ class NewAnswerMail extends Mailable
 
     public function build(): Mailable
     {
-        return $this->subject('New answer !')
+        return $this->subject('New Answer Mail')
                     ->view('mail.new-answer-mail')
                     ->with(['survey' => $this->survey]);
     }

@@ -121,11 +121,9 @@ public function index(): View
     public function storeAnswer (StoreSurveyAnswerRequest $request, Survey $survey, StoreSurveyAnswerAction $action)
     {
         $this->authorize('view', $survey);
-
         $dto = SurveyAnswerDTO::fromRequest($request);
         $answer = $action->handle($dto,$survey);
 
         SurveyAnswerSubmitted::dispatch($survey);
-
         return redirect()->route('surveys.show', $survey)->with('success', 'Votre réponse a bien été enregistrée.');    }
 }

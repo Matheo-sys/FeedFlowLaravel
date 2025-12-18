@@ -11,7 +11,7 @@ use App\Mail\NewAnswerMail;
 use App\Models\Survey;
 use App\Models\User;
 use App\Events\SurveyAnswerSubmitted;
-use App\Models\User;
+
 
 class SendNewAnswerNotification implements ShouldQueue
 {
